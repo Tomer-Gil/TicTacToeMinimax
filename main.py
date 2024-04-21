@@ -29,19 +29,20 @@ def is_win(board, is_x):
 
 
 def is_x_wins(board):
-    return is_win(board, True)
+    return is_win(board, is_x=True)
 
 
 def is_o_wins(board):
-    return is_win(board, False)
+    return is_win(board, is_x=False)
 
 
 def is_terminal_node(board):
-    return not (board == 0).sum()
+    return not (board == 0).sum()  # iff (board == 0).sum() == 0
 
 
 def get_score(board):
     """Heuristic function"""
+    # TODO: rewrite this comment
     # If board is full, score is 0 (we assume that the minute someone won, the game stops, so if we got a
     if is_x_wins(board):
         return X_WIN_SCORE
@@ -103,7 +104,7 @@ def play_human_turn(board):
 def play_game(board):
     is_game_ended = False
     i = 0
-    depth = 9
+    depth = N * N  # Usually 9
     while not is_game_ended:
         if i % 2 == 0:
             play_ai_turn(board, depth)

@@ -52,9 +52,28 @@ def get_score(board):
     return TIE_SCORE
 
 
-def minimax(board, depth, is_maximizer):
+def minimax(board, depth, alpha, beta, is_maximizer):
     """
+    Minimax algorithm, using alpha-beta pruning.
 
+    In a maximizer turn, alpha holds a lower bound on the score the maximizer will return, i.e., the number the
+    maximizer will return will be at least alpha.
+
+    Analogously, in a minimizer turn, beta holds an upper bound on the score the minimizer will return, i.e., the
+    number the minimizer will return will be at most beta.
+
+    Alpha and beta are passed together, so, the meaning of beta in a maximizer turn is an upper bound on the score its
+    father (predecessor) will return. Or simply, it means that it's father will return something which is at most beta.
+
+    So, if it's the maximizer turn, and alpha is greater than beta, than the maximizer can give up his turn and just
+    return the score of alpha, because anyway, it will only return something which is greater than/equals to alpha,
+    which we assume now is greater than beta, and it's father won't choose it.
+    For example, if it's the (the beginning of the) maximizer turn, and alpha = inf, beta = 3, and after a certain
+    move alpha becomes 5. So it means that the maximizer will return 5 or above to it's father.
+    But it's father is a minimizer, and will pick something which is at most 3, and so the its redundant for the
+    maximizer to keep test the rest of it's moves.
+
+    # TODO: Add analogous explanation for the minimizer turn.
     :param board: a node in the tree
     :param depth: depth in the recursion tree
     :param is_maximizer:
@@ -70,34 +89,41 @@ def minimax(board, depth, is_maximizer):
         best_value = -np.inf
         for row, col in np.argwhere(board == 0):
             board[row, col] = 1
-            val, *_ = minimax(board, depth - 1, False)
+            val, *_ = minimax(board, depth - 1, alpha, beta, False)
 
             # Save the optimal move
             if val > best_value:
                 best_row, best_col = row, col
 
-            best_value = max(best_value, val)
+            best_value = alpha = max(best_value, val)
             board[row, col] = 0
+
+            # Alpha-beta pruning
+            if alpha >= beta:
+                break
         return best_value, best_row, best_col
     # else
     best_value = np.inf
     for row, col in np.argwhere(board == 0):
         board[row, col] = -1
-        val, *_ = minimax(board, depth - 1, True)
+        val, *_ = minimax(board, depth - 1, alpha, beta, True)
 
         # Save the optimal move
         if val < best_value:
             best_row, best_col = row, col
 
-        best_value = min(best_value, val)
+        best_value = beta = min(best_value, val)
         board[row, col] = 0
+
+        # Alpha-beta pruning
+        if alpha >= beta:
+            break
     return best_value, best_row, best_col
 
 
 def play_ai_turn(board, depth):
-    _, best_row, best_col = minimax(board, depth - 1, True)
-    if best_row is not None and best_col is not None:
-        board[best_row, best_col] = 1
+    _, best_row, best_col = minimax(board, depth - 1, -np.inf, np.inf, True)
+    board[best_row, best_col] = 1
 
 
 def play_human_turn(board):

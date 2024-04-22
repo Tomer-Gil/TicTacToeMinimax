@@ -37,7 +37,8 @@ def is_o_wins(board):
 
 
 def is_terminal_node(board):
-    return not (board == 0).sum()  # iff (board == 0).sum() == 0
+    # The last condition - iff (board == 0).sum() == 0
+    return is_x_wins(board) or is_o_wins(board) or not (board == 0).sum()
 
 
 def get_score(board):
@@ -59,39 +60,44 @@ def minimax(board, depth, is_maximizer):
     :param is_maximizer:
     :return:
     """
-    # if is_x_wins(board) or is_o_wins(board) or is_terminal_node(board):
-    #     return get_score(board)
-    if is_x_wins(board) or is_o_wins(board) or depth == 0 or is_terminal_node(board):
-        return get_score(board)
+    if depth == 0 or is_terminal_node(board):
+        return get_score(board), None, None
+
+    # Save the optimal move
+    best_row, best_col = -1, -1
+
     if is_maximizer:
         best_value = -np.inf
         for row, col in np.argwhere(board == 0):
             board[row, col] = 1
-            val = minimax(board, depth - 1, False)
+            val, *_ = minimax(board, depth - 1, False)
+
+            # Save the optimal move
+            if val > best_value:
+                best_row, best_col = row, col
+
             best_value = max(best_value, val)
             board[row, col] = 0
-        return best_value
+        return best_value, best_row, best_col
     # else
     best_value = np.inf
     for row, col in np.argwhere(board == 0):
         board[row, col] = -1
-        val = minimax(board, depth - 1, True)
+        val, *_ = minimax(board, depth - 1, True)
+
+        # Save the optimal move
+        if val < best_value:
+            best_row, best_col = row, col
+
         best_value = min(best_value, val)
         board[row, col] = 0
-    return best_value
+    return best_value, best_row, best_col
 
 
 def play_ai_turn(board, depth):
-    best_value = -np.inf
-    best_row, best_col = -1, -1
-    for row, col in np.argwhere(board == 0):
-        board[row, col] = 1
-        val = minimax(board, depth - 1, False)
-        if val > best_value:
-            best_row, best_col = row, col
-        best_value = max(best_value, val)
-        board[row, col] = 0
-    board[best_row, best_col] = 1
+    _, best_row, best_col = minimax(board, depth - 1, True)
+    if best_row is not None and best_col is not None:
+        board[best_row, best_col] = 1
 
 
 def play_human_turn(board):
@@ -102,17 +108,15 @@ def play_human_turn(board):
 
 
 def play_game(board):
-    is_game_ended = False
+    is_game_ended = is_terminal_node(board)
     i = 0
-    depth = N * N  # Usually 9
+    # depth = N * N  # Usually 9
     while not is_game_ended:
         if i % 2 == 0:
-            play_ai_turn(board, depth)
+            play_ai_turn(board, np.inf)
         else:
             play_human_turn(board)
-        depth -= 1
-        if depth == 0:
-            is_game_ended = True
+        is_game_ended = is_terminal_node(board)
         i += 1
     print(board)
 
